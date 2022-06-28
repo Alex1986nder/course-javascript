@@ -23,7 +23,7 @@ function isAllTrue(array, fn) {
     throw new Error('fn is not a function');
   }
   for (let i = 0; i < array.length; i++) {
-    if (fn(array[i], i, array) !== true) {
+    if (!fn(array[i])) {
       return false;
     }
   }
@@ -61,7 +61,7 @@ function isSomeTrue(array, fn) {
   }
 
   for (let i = 0; i < array.length; i++) {
-    if (fn(array[i], i, array) !== false) {
+    if (fn(array[i]) !== false) {
       return true;
     }
   }
@@ -96,7 +96,7 @@ function returnBadArguments(fn, ...args) {
     try {
       fn(args[i], i, args);
     } catch {
-      arr.push(fn(args[i], i, args));
+      arr.push(args[i]);
     }
   }
   return arr;
@@ -133,45 +133,33 @@ function calculator(number = 0) {
   }
 
   let object = {
-    dif(number, ...args) {
+
+    sum(...args) {
+      for (let i = 0; i < args.length; i++) {
+        number = number + args[i];
+      }
+      return number;
+    },
+    dif(...args) {
       for (let i = 0; i < args.length; i++) {
         number = number - args[i];
-        if (typeof number !== 'number' || isNaN(number)) {
-          throw new Error('number is not a number');
-        }
       }
       return number;
     },
 
-    div(number, ...args) {
+    div(...args) {
       for (let i = 0; i < args.length; i++) {
         number = number / args[i];
         if (args[i] === 0) {
           throw new Error('division by 0');
         }
-        if (typeof number !== 'number' || isNaN(number)) {
-          throw new Error('number is not a number');
-        }
       }
       return number;
     },
-
-    sum(number, ...args) {
-      for (let i = 0; i < args.length; i++) {
-        number = number + args[i];
-        if (typeof number !== 'number' || isNaN(number)) {
-          throw new Error('number is not a number');
-        }
-      }
-      return number;
-    },
-
-    mul(number, ...args) {
+    
+    mul(...args) {
       for (let i = 0; i < args.length; i++) {
         number = number * args[i];
-        if (typeof number !== 'number' || isNaN(number)) {
-          throw new Error('number is not a number');
-        }
       }
       return number;
     },
