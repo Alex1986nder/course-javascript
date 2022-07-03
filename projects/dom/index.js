@@ -29,7 +29,7 @@ console.log(createDivWithText('loftschool'));
     // добавит элемент переданный первым аргументом в начало элемента переданного вторым аргументом
  */
 function prepend(what, where) {
-  return where.prepend(what);
+  where.prepend(what);
 }
 
 /*
@@ -170,7 +170,38 @@ function deleteTextNodesRecursive(where) {
      texts: 3
    }
  */
-function collectDOMStat(root) {}
+function collectDOMStat(root) {
+  const object = {
+    texts: 0,
+    classes: {},
+    tags: {},
+  };
+  function stat(root) {
+    const child = root.childNodes;
+    for (let i = 0; i < child.length; i++) {
+      if (child[i].nodeType === 3) {
+        object.texts++;
+      } else if (child[i].nodeType === 1) {
+        if (child[i].tagName in object.tags) {
+          object.tags[child[i].tagName]++;
+        } else {
+          object.tags[child[i].tagName] = 1;
+        }
+        const className = child[i].classList;
+        for (let i = 0; i < className.length; i++) {
+          if (className[i] in object.classes) {
+            object.classes[className[i]]++;
+          } else {
+            object.classes[className[i]] = 1;
+          }
+        }
+        stat(child[i]);
+      }
+    }
+  }
+  stat(root);
+  return object;
+}
 
 /*
  Задание 8 *:
