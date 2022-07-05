@@ -31,7 +31,6 @@ function delayPromise(seconds) {
  */
 function loadAndSortTowns() {
   return new Promise((resolve) => {
-    const towns = [];
     const xhr = new XMLHttpRequest();
     xhr.open(
       'GET',
@@ -41,13 +40,10 @@ function loadAndSortTowns() {
     xhr.responseType = 'json';
     xhr.send();
     xhr.addEventListener('load', () => {
-      for (let i = 0; i < xhr.response.length; i++) {
-        towns.push(xhr.response[i]);
-        resolve(towns.sort((a, b) => (a.name > b.name ? 1 : -1)));
-      }
+      resolve(xhr.response.sort((a, b) => (a.name > b.name ? 1 : -1)));
     });
   });
 }
-loadAndSortTowns().then((towns) => console.log(towns));
+// loadAndSortTowns().then((towns) => console.log(towns));
 
 export { delayPromise, loadAndSortTowns };
