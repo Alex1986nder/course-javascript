@@ -49,11 +49,16 @@ function isMatching(full, chunk) {
   return full.toLowerCase().includes(chunk.toLowerCase());
 }
 
-const newCookie = document.cookie.split('; ').reduce((prev, current) => {
-  const [name, value] = current.split('=');
-  prev[name] = value;
-  return prev;
-}, {});
+function newCookie() {
+  if (!document.cookie) {
+    return {};
+  }
+  return document.cookie.split('; ').reduce((prev, current) => {
+    const [name, value] = current.split('=');
+    prev[name] = value;
+    return prev;
+  }, {});
+}
 
 filterNameInput.addEventListener('input', function () {
   const filterValue = filterNameInput.value;
@@ -62,17 +67,16 @@ filterNameInput.addEventListener('input', function () {
 });
 
 addButton.addEventListener('click', () => {
-  document.cookie = `${addNameInput.value}=${addValueInput.value}`;
-  addNameInput.value = '';
-  addValueInput.value = '';
-  listTable.innerHTML = '';
-  cookie();
+  document.cookie = `${addNameInput.value.trim()}=${addValueInput.value.trim()}`;
+
+  updateFilter(newCookie, isMatching, filterNameInput.value);
 });
 
 function cookie() {
-  for (const name in newCookie) {
+  listTable.innerHTML = '';
+  for (const name in newCookie()) {
     const tr = document.createElement('tr');
-    const value = newCookie[name];
+    const value = newCookie()[name];
     tr.innerHTML = `<td>${name}</td> <td>${value}</td> `;
     const btn = document.createElement('button');
     btn.innerText = 'удалить';
@@ -86,20 +90,13 @@ function cookie() {
 }
 
 function updateFilter(newCookie, isMatching, filterValue) {
-  for (const name in newCookie) {
-    if (typeof name !== 'undefined' && typeof newCookie[name] !== 'undefined') {
-      if (isMatching(name, filterValue) || isMatching(newCookie[name], filterValue)) {
+  for (const name in newCookie()) {
+    if (typeof name !== 'undefined' || typeof newCookie()[name] !== 'undefined') {
+      if (isMatching(name, filterValue) || isMatching(newCookie()[name], filterValue)) {
         cookie();
       }
-      console.log(newCookie);
     }
   }
 }
 
-// listTable.addEventListener('click', (e) => {
-//   listTable.removeChild(tr);
-// });
-
-console.log(document.cookie);
-
-cookie();
+updateFilter(newCookie, isMatching, filterNameInput.value);
