@@ -59,44 +59,38 @@ function newCookie() {
     return prev;
   }, {});
 }
+const coo = newCookie();
 
 filterNameInput.addEventListener('input', function () {
   const filterValue = filterNameInput.value;
   listTable.innerHTML = '';
-  updateFilter(newCookie, isMatching, filterValue);
+  cookie(newCookie(), isMatching, filterValue);
 });
 
 addButton.addEventListener('click', () => {
   document.cookie = `${addNameInput.value.trim()}=${addValueInput.value.trim()}`;
-
-  updateFilter(newCookie, isMatching, filterNameInput.value);
+  cookie(newCookie(), isMatching, filterNameInput.value);
 });
 
-function cookie() {
+function cookie(coo, isMatching, filterValue) {
   listTable.innerHTML = '';
-  for (const name in newCookie()) {
-    const tr = document.createElement('tr');
-    const value = newCookie()[name];
-    tr.innerHTML = `<td>${name}</td> <td>${value}</td> `;
-    const btn = document.createElement('button');
-    btn.innerText = 'удалить';
-    btn.addEventListener('click', () => {
-      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;';
-      listTable.removeChild(tr);
-    });
-    tr.appendChild(btn);
-    listTable.appendChild(tr);
-  }
-}
-
-function updateFilter(newCookie, isMatching, filterValue) {
-  for (const name in newCookie()) {
-    if (typeof name !== 'undefined' || typeof newCookie()[name] !== 'undefined') {
-      if (isMatching(name, filterValue) || isMatching(newCookie()[name], filterValue)) {
-        cookie();
+  for (const name in coo) {
+    if (typeof name !== 'undefined' || typeof coo[name] !== 'undefined') {
+      if (isMatching(name, filterValue) || isMatching(coo[name], filterValue)) {
+        const tr = document.createElement('tr');
+        const value = coo[name];
+        tr.innerHTML = `<td>${name}</td> <td>${value}</td> `;
+        const btn = document.createElement('button');
+        btn.innerText = 'удалить';
+        btn.addEventListener('click', () => {
+          document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;';
+          listTable.removeChild(tr);
+        });
+        tr.appendChild(btn);
+        listTable.appendChild(tr);
       }
     }
   }
 }
 
-updateFilter(newCookie, isMatching, filterNameInput.value);
+cookie(coo, isMatching, filterNameInput.value);
