@@ -1,219 +1,96 @@
 // import './index.html';
 ymaps.ready(init);
-let myMap, myPlacemark;
+let myMap, placemark;
 
 function init() {
   myMap = new ymaps.Map(
     'map',
     {
       center: [55.752296, 37.602629],
-      zoom: 13,
+      zoom: 14,
     },
     {
-      balloonMinWidth: 220,
+      balloonMinWidth: 353,
     }
   );
-  addPlacemark();
-  points = [];
-  geoObjects = [];
+
+  myMap.events.add('click', function (e) {
+    myMap.balloon.close();
+  });
+
+  myMap.events.add('click', function (e) {
+    if (!myMap.balloon.isOpen()) {
+      let coords = e.get('coords');
+      myMap.balloon.open(coords, {
+        content:
+          '<div style = "height: 300px;">' +
+          '<div id = "review__list"; style = "height: 100px; overflow: scroll;"></div>' +
+          '<h1>Отзыв</h1>' +
+          '<ul style = "padding: 0; list-style-type: none;">' +
+          '<li><input id = "myName" placeholder="Укажите Ваше имя"></li>' +
+          '<li><input id = "place" placeholder="Укажите место"></li>' +
+          '<li><textarea id = "review" style = "resize: none;" placeholder="Оставьте отзыв"></textarea>' +
+          '<li><button id = "btn">Добавить</button></li>' +
+          '<ul>' +
+          '</div>',
+      });
+    }
+  });
+  clusterer = new ymaps.Clusterer({
+    // groupByCoordinates: true,
+    clusterDisableClickZoom: true,
+    clusterOpenBalloonOnClick: true,
+  });
+  clusterer.events.add('click', (e) => {
+    const coords = e.get('target').geometry.getCoordinates();
+    myMap.balloon.open(coords);
+  });
+
+  myMap.geoObjects.add(clusterer);
+
+  myMap.events.add('click', function (e) {
+    let coords = e.get('coords');
+    createPlacemark(coords);
+  });
+  document.body.addEventListener('click', onClick);
 }
-
-document.body.addEventListener('click', onClick);
-let storage = localStorage;
-
 function onClick(e) {
-  // e.preventDefault();
-  const myName = document.querySelector('#myName');
-  const place = document.querySelector('#place');
-  const review = document.querySelector('#review');
   if (e.target.id === 'btn') {
+    const myName = document.querySelector('#myName');
+    const place = document.querySelector('#place');
+    const review = document.querySelector('#review');
+
     storage.data = JSON.stringify({
       name: myName.value,
       place: place.value,
       review: review.value,
     });
-    let clusterer = new ymaps.Clusterer({
-      clusterDisableClickZoom: true,
-    });
-    clusterer.options.set({
-      gridSize: 100,
-      clusterDisableClickZoom: true,
-    });
-    for (let i = 0; i < points.length; i++) {
-      geoObjects[i] = new ymaps.Placemark(points[i]);
-    }
-    clusterer.add(geoObjects);
-    myMap.geoObjects.add(clusterer);
+    createForm();
+    // myMap.balloon.setData(content)
     myMap.balloon.close();
   }
 }
+let storage = localStorage;
 
-function addPlacemark() {
-  myMap.events.add('click', function (e) {
-    e.preventDefault();
-    if (!myMap.balloon.isOpen()) {
-      let coords = e.get('coords');
-      points.push('coords');
-      myMap.balloon.open(coords, {
-        contentBody:
-          '<div style = "height: 200px;">' +
-          '<ul id = "review__list"></ul>' +
-          '<h1>Отзыв</h1>' +
-          '<ul style = "list-style-type: none;">' +
-          '<li><input id = "myName" placeholder="Укажите Ваше имя"></li>' +
-          '<li><input id = "place" placeholder="Укажите место"></li>' +
-          '<li><textarea id = "review" style = "resize: none;" placeholder="Оставьте отзыв"></textarea>' +
-          '<li><button id = "btn">Добавить</button></li>' +
-          '</div>' +
-          '<ul>',
-      });
-
-      // myMap.balloon.open(coords);
-    } else {
-      myMap.balloon.close();
-    }
+function createPlacemark(coords) {
+  placemark = new ymaps.Placemark(coords);
+  placemark.events.add('click', (e) => {
+    const coords = e.get('target').geometry.getCoordinates();
+    myMap.balloon.open(coords);
+    
+    const result = JSON.parse(storage.data || '{}');
+    const form = createForm(coords, result);
+    myMap.balloon.setData(form.innerHTML);
   });
+  clusterer.add(placemark);
 }
 
-// function newReview() {
-//   myPlacemark.addEventListener('click', function () {
-//     const reviewList = document.querySelector('#review__list');
-//     const name = document.createElement('li');
-//     name.innerHTML = 'текст';
-//     const result = JSON.parse(storage.data || '{}');
-//     myName.value = result.myName || '';
-//     bday.value = result.bday || '';
-//     about.value = result.about || '';
-
-//     reviewList.appendChild(name);
-//   });
-// }
-// myPlacemark = new ymaps.Placemark(coords);
-// myMap.geoObjects.add(myPlacemark);
-// document.body.addEventListener('input', stor);
-// myPlacemark.events.add('click', function () {
-//   // addPlacemark(myPlacemark);
-//   if (!myMap.balloon.isOpen()) {
-//     let coords = e.get('coords');
-//     myPlacemark = new ymaps.Placemark(coords);
-//     myMap.geoObjects.add(myPlacemark);
-//     myMap.balloon.open(coords, {
-//       contentHeader: 'Отзыв:',
-//       contentBody:
-//         '<div style = "height: 200px;">' +
-//         '<div id = "review__list"></div>' +
-//         '<input id = "myName" placeholder="Укажите Ваше имя">' +
-//         '<input id = "place" placeholder="Укажите место">' +
-//         '<textarea id = "review" style = "resize: none;" placeholder="Оставьте отзыв"></textarea>' +
-//         '<button id = "btn">Добавить</button>' +
-//         '</div>',
-//     });
-//   } else {
-//     myMap.balloon.close();
-//   }
-// });
-// const btn = document.querySelector('#btn');
-// geoObjects = [];
-// myPlacemark = [];
-
-// myMap.events.add('click', function (e) {
-//   let coords = e.get('coords');
-//   myPlacemark = new ymaps.Placemark(coords);
-//   myMap.geoObjects.add(myPlacemark);
-// });
-
-// myMap.geoObjects.add(myPlacemark);
-
-// function createPlacemark(coords) {
-//   return new ymaps.Placemark(coords, {
-//     draggable: true,
-//   });
-// }
-// let coords = e.get('coords');
-// if (myPlacemark) {
-//   myPlacemark.geometry.setCoordinates(coords);
-// } else {
-//   myPlacemark = createPlacemark(coords);
-//   myMap.geoObjects.add(myPlacemark);
-//   myPlacemark.events.add('dragend', function () {
-//     getAddress(myPlacemark.geometry.getCoordinates());
-//   });
-
-// let myBalloonFooterBodyLayout = ymaps.templateLayoutFactory.createClass(
-//   '<input id = "btn" type="button" value="Выбрать" class="baloon-button">',
-//   {
-//     build: function () {
-//       const btn = document.querySelector('#btn');
-//       myBalloonContentBodyLayout.superclass.build.call(this);
-//       btn.events.add('click', function () {
-//         console.log('Do something...');
-//       });
-//     },
-//   }
-// );
-// let objectManager = new ymaps.ObjectManager({
-//   contentFooterLayout: myBalloonFooterBodyLayout,
-// });
-
-// const baloonLayout = document.querySelector('.ymaps-2-1-79-balloon__layout');
-
-// function stor() {
-//   storage.data = JSON.stringify({
-//     myName: myName.value,
-//     place: place.value,
-//     review: review.value,
-//   });
-// }
-
-// let clusterer = new ymaps.Clusterer({
-//   groupByCoordinates: false,
-//   clusterDisableClickZoom: true,
-//   clusterHideIconOnBalloonOpen: false,
-//   geoObjectHideIconOnBalloonOpen: false,
-//   clusterIconContentLayout: null,
-// });
-// clusterer.add(geoObjects);
-// myMap.geoObjects.add(clusterer);
-
-// myName.innerHTML = '';
-
-// storage.data = JSON.stringify({
-//   myName: myName.value,
-//   place: place.value,
-//   review: review.value,
-// });
-
-// if (e.target.id === 'btn') {
-//   stor();
-//   myMap.balloon.close();
-// }
-
-// objectManager = new ymaps.ObjectManager({
-//   clusterize: true,
-//   clusterDisableClickZoom: true,
-// });
-
-// let clusterer = new ymaps.Clusterer({
-// clusterDisableClickZoom: true,
-// clusterOpenBalloonOnClick: true,
-// clusterIconContentLayout: null,
-// groupByCoordinates: false,
-// });
-// objectManager.add(placemarks);
-//   let clusterer = new ymaps.Clusterer({
-//     clusterDisableClickZoom: true,
-//     clusterOpenBalloonOnClick: true,
-//     // clusterHideIconOnBalloonOpen: false,
-//     // geoObjectHideIconOnBalloonOpen: false,
-//   });
-//   clusterer.options.set({
-//     gridSize: 80,
-//     clusterDisableClickZoom: true
-// });
-// clusterer.add(placemarks);
-// myMap.geoObjects.add(clusterer);
-// var result = ymaps.geoQuery(ymaps.geocode('Арбат')).applyBoundsToMap(myMap, {checkZoomRange: true});
-// myMap.geoObjects.add(placemarks.clusterize());
-// clusterer.add(geoObjects);
-// myMap.geoObjects.add(objectManager);
-// console.log(geoObjects);
+function createForm(coords, result) {
+  const reviewList = document.querySelector('#review__list');
+  reviewList.id.coords = JSON.stringify(coords);
+  const div = document.createElement('div');
+   result = JSON.parse(storage.data || '{}');
+  div.innerHTML = `
+<div><b>${result.name}</b>[${result.place}]</div><div>${result.review}</div>`;
+  reviewList.appendChild(div);
+}
