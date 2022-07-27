@@ -1,7 +1,10 @@
 // import './index.html';
 ymaps.ready(init);
+let storage = localStorage;
+let clusterer;
+let coords;
 let myMap, placemark;
-
+const result = JSON.parse(storage.data || '{}');
 function init() {
   myMap = new ymaps.Map(
     'map',
@@ -10,7 +13,7 @@ function init() {
       zoom: 14,
     },
     {
-      balloonMinWidth: 353,
+      balloonMinWidth: 250,
     }
   );
 
@@ -23,7 +26,7 @@ function init() {
       let coords = e.get('coords');
       myMap.balloon.open(coords, {
         content:
-          '<div style = "height: 300px;">' +
+          '<div id = "reviews"; style = "height: 300px;">' +
           '<div id = "review__list"; style = "height: 100px; overflow: scroll;"></div>' +
           '<h1>Отзыв</h1>' +
           '<ul style = "padding: 0; list-style-type: none;">' +
@@ -37,60 +40,66 @@ function init() {
     }
   });
   clusterer = new ymaps.Clusterer({
-    // groupByCoordinates: true,
+    groupByCoordinates: true,
     clusterDisableClickZoom: true,
-    clusterOpenBalloonOnClick: true,
+    clusterOpenBalloonOnClick: false,
   });
   clusterer.events.add('click', (e) => {
     const coords = e.get('target').geometry.getCoordinates();
-    myMap.balloon.open(coords);
+    myMap.balloon.open(coords, createForm());
   });
 
   myMap.geoObjects.add(clusterer);
 
-  myMap.events.add('click', function (e) {
-    let coords = e.get('coords');
-    createPlacemark(coords);
-  });
   document.body.addEventListener('click', onClick);
-}
-function onClick(e) {
-  if (e.target.id === 'btn') {
-    const myName = document.querySelector('#myName');
-    const place = document.querySelector('#place');
-    const review = document.querySelector('#review');
 
-    storage.data = JSON.stringify({
-      name: myName.value,
-      place: place.value,
-      review: review.value,
-    });
-    createForm();
-    // myMap.balloon.setData(content)
-    myMap.balloon.close();
-  }
-}
-let storage = localStorage;
-
-function createPlacemark(coords) {
-  placemark = new ymaps.Placemark(coords);
-  placemark.events.add('click', (e) => {
-    const coords = e.get('target').geometry.getCoordinates();
-    myMap.balloon.open(coords);
-    
-    const result = JSON.parse(storage.data || '{}');
-    const form = createForm(coords, result);
-    myMap.balloon.setData(form.innerHTML);
+  myMap.events.add('click', function (e) {
+    return (coords = e.get('coords'));
   });
-  clusterer.add(placemark);
-}
 
-function createForm(coords, result) {
-  const reviewList = document.querySelector('#review__list');
-  reviewList.id.coords = JSON.stringify(coords);
-  const div = document.createElement('div');
-   result = JSON.parse(storage.data || '{}');
-  div.innerHTML = `
-<div><b>${result.name}</b>[${result.place}]</div><div>${result.review}</div>`;
-  reviewList.appendChild(div);
+  function onClick(e) {
+    if (e.target.id === 'btn') {
+      const myName = document.querySelector('#myName');
+      const place = document.querySelector('#place');
+      const review = document.querySelector('#review');
+
+      storage.data = JSON.stringify({
+        name: myName.value,
+        place: place.value,
+        review: review.value,
+      });
+      createForm(coords, result);
+      createPlacemark(coords, createForm);
+    }
+  }
+
+  // const reviews = document.querySelector('#reviews');
+  function createForm(coords, result) {
+    const div = document.createElement('div');
+    const reviewList = document.querySelector('#review__list');
+    // const root = document.createElement('div');
+    // root.innerHTML = reviews.innerHTML;
+    reviewList.id.coords = JSON.stringify(coords);
+    result = JSON.parse(storage.data || '{}');
+    div.innerHTML = `
+    <div><b>${result.name}</b>[${result.place}]</div><div>${result.review}</div>`;
+    reviewList.appendChild(div);
+
+     reviewList.innerHTML 
+    // myMap.balloon.setData(reviews.innerHTML);
+    //  reviewList;
+  }
+
+  function createPlacemark(coords, result) {
+    placemark = new ymaps.Placemark(coords);
+    placemark.events.add('click', (e) => {
+      // const reviews = document.querySelector('#reviews');
+      const coords = e.get('target').geometry.getCoordinates();
+      // createForm(coords, result)
+      // myMap.balloon.setData(form.innerHTML);
+      // myMap.balloon.getData(reviews.innerHTML);
+      myMap.balloon.open(coords,createForm());
+    });
+    clusterer.add(placemark);
+  }
 }
