@@ -44,18 +44,17 @@ function init() {
     myMap.balloon.open(coords, createForm());
   });
 
+  let arr = localStorage.getItem('reviews')? JSON.parse(localStorage.getItem('reviews')): [];
   const storage = JSON.parse(localStorage.getItem('reviews') || []);
   // console.log(storage);
-  let arr = [];
+  // let arr = [];
 
   storage.forEach((reviews) => {
-    createPlacemark(reviews.coords);
+    createPlacemark(reviews.coords, reviews.reviews);
     // console.log(reviews.coords);
-  });
-  // for (let i = 0; i < storage.length; i++) {
-  //   console.log(storage[1].reviews);
 
-  // }
+    // console.log(arr);
+  });
 
   myMap.geoObjects.add(clusterer);
 
@@ -78,34 +77,40 @@ function init() {
           review: review.value,
         },
       });
-      const result = JSON.parse(localStorage.data || '{}');
-      arr.push(result);
-      console.log(arr);
+      const res = JSON.parse(localStorage.data || '{}');
+      arr.push(res);
+      // console.log(arr);
       localStorage.setItem('reviews', JSON.stringify(arr));
       // console.log(arr);
-      createForm(result);
+      createForm(coords, storage);
       createPlacemark(coords, result);
       // myMap.balloon.close();
     }
   }
   // createForm()
-  function createForm(result) {
-    const div = document.createElement('div');
+  function createForm(coords, storage) {
+    const root = document.createElement('div');
     const reviewList = document.querySelector('#review__list');
-    result = JSON.parse(localStorage.data || '{}');
-    console.log(result);
-    div.innerHTML = `
-    <div><b>${result.reviews.name}</b>[${result.reviews.place}]</div><div>${result.reviews.review}</div>`;
-    reviewList.appendChild(div);
+    // result = JSON.parse(localStorage.data || '{}');
+    // console.log(result);
+    reviewList.coords = JSON.stringify(coords);
+
     // console.log(div);
-    console.log(reviewList);
+    // console.log(reviewList.innerHTML);
+    for (let res of storage) {
+      const div = document.createElement('div');
+      div.innerHTML = `
+      <div><b>${res.reviews.name}</b>[${res.reviews.place}]</div><div>${res.reviews.review}</div>`;
+      reviewList.appendChild(div);
+    }
+    return root;
   }
 
-  function createPlacemark(coords, result) {
-    placemark = new ymaps.Placemark(coords);
+  function createPlacemark(coords) {
+    placemark = new ymaps.Placemark(coords, result);
     placemark.events.add('click', (e) => {
       const coords = e.get('target').geometry.getCoordinates();
-      myMap.balloon.open(coords, createForm());
+      myMap.balloon.open(coords, createForm(coords));
     });
     clusterer.add(placemark);
   }
