@@ -1,10 +1,10 @@
-// import './index.html';
+import './index.html';
+import './style.css';
+import { templates } from './templates';
+
 ymaps.ready(init);
-let storage = localStorage;
-let clusterer;
-let coords;
-let myMap, placemark;
-const result = JSON.parse(storage.data || '{}');
+let myMap, placemark, coords, clusterer;
+
 function init() {
   myMap = new ymaps.Map(
     'map',
@@ -18,38 +18,37 @@ function init() {
   );
 
   myMap.events.add('click', function (e) {
-    myMap.balloon.close();
+    let coords = e.get('coords');
+    myMap.balloon.open(coords, {
+      content:
+        '<div id = "review__list"; style = "height: 100px; overflow: scroll;"></div>' +
+        templates,
+    });
   });
 
-  myMap.events.add('click', function (e) {
-    if (!myMap.balloon.isOpen()) {
-      let coords = e.get('coords');
-      myMap.balloon.open(coords, {
-        content:
-          '<div id = "reviews"; style = "height: 300px;">' +
-          '<div id = "review__list"; style = "height: 100px; overflow: scroll;"></div>' +
-          '<h1>Отзыв</h1>' +
-          '<ul style = "padding: 0; list-style-type: none;">' +
-          '<li><input id = "myName" placeholder="Укажите Ваше имя"></li>' +
-          '<li><input id = "place" placeholder="Укажите место"></li>' +
-          '<li><textarea id = "review" style = "resize: none;" placeholder="Оставьте отзыв"></textarea>' +
-          '<li><button id = "btn">Добавить</button></li>' +
-          '<ul>' +
-          '</div>',
-      });
-    }
-  });
   clusterer = new ymaps.Clusterer({
     groupByCoordinates: true,
     clusterDisableClickZoom: true,
     clusterOpenBalloonOnClick: false,
   });
+
   clusterer.events.add('click', (e) => {
     const coords = e.get('target').geometry.getCoordinates();
-    myMap.balloon.open(coords, createForm());
+    openBaloon(coords);
   });
 
-  myMap.geoObjects.add(clusterer);
+  let storage = JSON.parse(localStorage.getItem('reviews')) || [];
+  let arr = localStorage.getItem('reviews')
+    ? JSON.parse(localStorage.getItem('reviews'))
+    : [];
+
+  renderPlacemark();
+
+  function renderPlacemark() {
+    storage.forEach((reviews) => {
+      createPlacemark(reviews.coords);
+    });
+  }
 
   document.body.addEventListener('click', onClick);
 
@@ -63,43 +62,46 @@ function init() {
       const place = document.querySelector('#place');
       const review = document.querySelector('#review');
 
-      storage.data = JSON.stringify({
-        name: myName.value,
-        place: place.value,
-        review: review.value,
-      });
-      createForm(coords, result);
-      createPlacemark(coords, createForm);
+      const newReview = {
+        coords: coords,
+        reviews: {
+          name: myName.value,
+          place: place.value,
+          review: review.value,
+        },
+      };
+      arr.push(newReview);
+      localStorage.setItem('reviews', JSON.stringify(arr));
+      createPlacemark(coords);
+      myMap.balloon.close();
     }
   }
 
-  // const reviews = document.querySelector('#reviews');
-  function createForm(coords, result) {
-    const div = document.createElement('div');
-    const reviewList = document.querySelector('#review__list');
-    // const root = document.createElement('div');
-    // root.innerHTML = reviews.innerHTML;
-    reviewList.id.coords = JSON.stringify(coords);
-    result = JSON.parse(storage.data || '{}');
-    div.innerHTML = `
-    <div><b>${result.name}</b>[${result.place}]</div><div>${result.review}</div>`;
-    reviewList.appendChild(div);
-
-     reviewList.innerHTML 
-    // myMap.balloon.setData(reviews.innerHTML);
-    //  reviewList;
+  function openBaloon(coords, storage) {
+    storage = JSON.parse(localStorage.getItem('reviews')) || [];
+    let reviewList = '';
+    for (const review of storage) {
+      // console.log(review)
+      if (JSON.stringify(review.coords) === JSON.stringify(coords)) {
+        reviewList += `<div><b>${review.reviews.name}</b>[${review.reviews.place}]</div><div>${review.reviews.review}</div>`;
+        // console.log(JSON.stringify(review.coords), JSON.stringify(coords));
+        myMap.balloon.open(review.coords, {
+          content:
+            `<div id = "review__list"; style = "height: 100px; overflow: scroll;"><div>${reviewList}</div></div>` +
+            templates,
+        });
+        console.log(reviewList);
+      }
+    }
   }
-
-  function createPlacemark(coords, result) {
+  function createPlacemark(coords, reviews) {
     placemark = new ymaps.Placemark(coords);
     placemark.events.add('click', (e) => {
-      // const reviews = document.querySelector('#reviews');
       const coords = e.get('target').geometry.getCoordinates();
-      // createForm(coords, result)
-      // myMap.balloon.setData(form.innerHTML);
-      // myMap.balloon.getData(reviews.innerHTML);
-      myMap.balloon.open(coords,createForm());
+
+      openBaloon(coords);
     });
     clusterer.add(placemark);
+    myMap.geoObjects.add(clusterer);
   }
 }
